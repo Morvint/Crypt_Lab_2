@@ -232,9 +232,10 @@ def FEAL_deencryption (text, key, i):
     return text
 
 def main():
-    file_name1 = "C:/Programm Projects/Python Project/Crypto_Lab_2/img.png"
-    file_name2 = "C:/Programm Projects/Python Project/Crypto_Lab_2/newimg.png"
-    file_name3 = "C:/Programm Projects/Python Project/Crypto_1/decryptimg.png"
+	
+    file_name1 = "img.png"
+    file_name2 = "newimg.png"
+    file_name3 = "decryptimg.png"
     img = cv2.imread(file_name1)
     print(img.shape)
     img = img.reshape(img.shape[0] * img.shape[1] * img.shape[2])
