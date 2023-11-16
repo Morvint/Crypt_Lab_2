@@ -138,10 +138,8 @@ def F (text, key):
     # print(C)
     return C
 
-def FEAL_encryption (text, key, i):
+def FEAL_encryption (text, key):
     """Сам алгоритм FEAL"""
-    if (i % 1000 == 0):
-        print (i)
         
     # print("t --> ", text)
     text = np.array(list(text))
@@ -185,11 +183,8 @@ def FEAL_encryption (text, key, i):
 
     return text
 
-def FEAL_deencryption (text, key, i):
+def FEAL_deencryption (text, key):
     """Сам алгоритм FEAL, вернее дешифратор"""
-    if (i % 1000 == 0):
-        print (i)
-
     # text = ''.join(format(ord(x), '08b') for x in text)
     text = np.array(list(text))
 
@@ -237,14 +232,14 @@ def main():
     file_name2 = "newimg.png"
     file_name3 = "decryptimg.png"
     img = cv2.imread(file_name1)
-    print(img.shape)
-    img = img.reshape(img.shape[0] * img.shape[1] * img.shape[2])
-    img = img.reshape(277 * 277 * 3)
+    img_shape = np.array(img.shape)
+    img = img.reshape(img_shape[0] * img_shape[1] * img_shape[2])
+    # print("111", img_shape[0] * img_shape[1] * img_shape[2])
     img = ''.join(format(x, '08b') for x in img)
-    print(len(img))
+    # print(len(img))
 
 
-    key = round_key("qwertyst")
+    key = round_key("zxcvasdf")
 
     # message = "wasdwasdwasdwasd"
     # message = ''.join(format(ord(x), '08b') for x in message)
@@ -253,75 +248,59 @@ def main():
 
     while (round(len(message) % 64) != 0):
         message += '0'
-    print(len(message))
 
     crypt = ''
     for i in range(len(message) // 64):
-    # for i in range(20 - 1, -1, -1):
-        text = FEAL_encryption(message[i*64:i*64+64], key, i)
-        # print(message[i*64:i*64+64])
+        text = FEAL_encryption(message[i*64:i*64+64], key)
         crypt += ''.join(text)
-        # print(i, " --> ", len(message[-(i*64+64):-(i*64)]))
-    # print("--> ", len(message[i*64:i*64+64]))
-    img = crypt[0:277*277*3*8]
-    # print(i, " --> ", len(message[-(i*64+64):-(i*64)]))
+    img = crypt[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
 
     c = []
     for i in range(len(img) // 8):
-        # if(i % 25000 == 0):
-        #     print(i)
         j = int(img[i*8:i*8+8], 2)
-        # c = np.concatenate((c, j), axis=None)
-        # с = np.append(c, j, axis=None)
         c.append(j)
     c = np.array(c)
-    print(c.shape)
     img = c
     
-    # print(len(img))
-    img = img.reshape(277, 277, 3)
+    print("Encrypt successfully")
+    img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
     cv2.imwrite(file_name2, img)
 
     decrypt = ''
-    # message = message[::-1]
-    for i in range(len(message) // 64):
-        text = FEAL_deencryption(message[i*64:i*64+64], key, i)
-        # print(message[i*64:i*64+64])
+    for i in range(len(crypt) // 64):
+        text = FEAL_deencryption(crypt[i*64:i*64+64], key)
         decrypt += ''.join(text)
-    img = decrypt[0:277*277*3*8]
+    img = decrypt[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
 
     z = []
     for i in range(len(img) // 8):
-        # if(i % 25000 == 0):
-        #     print(i)
         j = int(img[i*8:i*8+8], 2)
-        # z = np.concatenate((z, j), axis=None)
-        # с = np.append(c, j, axis=None)
         z.append(j)
     z = np.array(z)
-    print(z.shape)
+    # print(z.shape)
     img = z
 
-    img = img.reshape(277, 277, 3)
+    print("Decrypt successfully")
+    img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
     cv2.imwrite(file_name3, img)
 
 
-    """crypt = ''
-    for i in range(len(message) // 64):
-        text = FEAL_encryption(message[i*64:i*64+64], key, i)
-        crypt += ''.join(text)
-    term = ''.join(chr(int(crypt[i*8:i*8+8], 2)) for i in range(len(crypt) // 8))
-    print("term -->", term)
+    # crypt = ''
+    # for i in range(len(message) // 64):
+    #     text = FEAL_encryption(message[i*64:i*64+64], key, i)
+    #     crypt += ''.join(text)
+    # term = ''.join(chr(int(crypt[i*8:i*8+8], 2)) for i in range(len(crypt) // 8))
+    # print("term -->", term)
 
-    term = ''.join(format(ord(x), '08b') for x in term)
-    print(len(term))
-    decrypt = ''
-    for i in range(len(term) // 64):
-        text = FEAL_deencryption(term[i*64:i*64+64], key, i)
-        decrypt += ''.join(text)
-    print("decrypt --> ", len(decrypt))
-    term = ''.join(chr(int(decrypt[i*8:i*8+8], 2)) for i in range(len(decrypt) // 8))
-    print(term)"""
+    # term = ''.join(format(ord(x), '08b') for x in term)
+    # print(len(term))
+    # decrypt = ''
+    # for i in range(len(term) // 64):
+    #     text = FEAL_deencryption(term[i*64:i*64+64], key, i)
+    #     decrypt += ''.join(text)
+    # print("decrypt --> ", len(decrypt))
+    # term = ''.join(chr(int(decrypt[i*8:i*8+8], 2)) for i in range(len(decrypt) // 8))
+    # print(term)
 
 
 if __name__ == "__main__":
