@@ -412,7 +412,6 @@ def main():
     #     decrypt += ''.join(text)
 
     crypt = rev(crypt)
-    init_vector = rev(init_vector)
     for i in range(len(crypt) // 64):
         if i < (len(crypt) // 64) - 1:
             # print("true ", i)
