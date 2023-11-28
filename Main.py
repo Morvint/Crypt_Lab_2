@@ -231,10 +231,10 @@ def main():
     file_name1 = "img.png"
     file_name2 = "newimg.png"
     file_name3 = "decryptimg.png"
+    file_name4 = "newimg_copy.png"
     img = cv2.imread(file_name1)
     img_shape = np.array(img.shape)
     img = img.reshape(img_shape[0] * img_shape[1] * img_shape[2])
-    # print("111", img_shape[0] * img_shape[1] * img_shape[2])
     img = ''.join(format(x, '08b') for x in img)
     # print(len(img))
 
@@ -248,12 +248,13 @@ def main():
 
     while (round(len(message) % 64) != 0):
         message += '0'
+        print("1")
 
-    crypt = ''
+    crypt0 = ''
     for i in range(len(message) // 64):
         text = FEAL_encryption(message[i*64:i*64+64], key)
-        crypt += ''.join(text)
-    img = crypt[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
+        crypt0 += ''.join(text)
+    img = crypt0[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
 
     c = []
     for i in range(len(img) // 8):
@@ -265,6 +266,12 @@ def main():
     print("Encrypt successfully")
     img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
     cv2.imwrite(file_name2, img)
+
+    crypt = cv2.imread(file_name4)
+    crypt_shape = np.array(crypt.shape)
+    crypt = crypt.reshape(crypt_shape[0] * crypt_shape[1] * crypt_shape[2])
+    crypt = ''.join(format(x, '08b') for x in crypt)
+    # print(len(crypt))
 
     decrypt = ''
     for i in range(len(crypt) // 64):
