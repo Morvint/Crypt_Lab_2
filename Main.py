@@ -1,7 +1,20 @@
 import numpy as np
-from PIL import Image
 import cv2
-import matplotlib.pyplot as plt
+# from PIL import Image
+# import matplotlib.pyplot as plt
+
+def rev(var):
+    res=''
+    for i in range(len(var)-1,-1,-1):
+        res+=var[i]
+    return res
+
+# def rev(var):
+    res = ''
+    for i in range (len(var) // 64):
+        # print(term[i*5:i*5+5])
+        res = var[i*64:i*64+64] + res
+    return res
 
 def XOR (a0, a1):
     """Исключающее ИЛИ;
@@ -226,6 +239,104 @@ def FEAL_deencryption (text, key):
 
     return text
 
+def FEAL_encryption_term (text, key, chipher):
+    """Сам алгоритм FEAL"""
+        
+    # print("t --> ", text)
+    text = np.array(list(text))
+    chipher = np.array(list(chipher))
+    # print(text.shape)
+
+    text = XOR(text, chipher)
+    
+    text = XOR(text, key[4:8].reshape(64))
+    text = text.reshape(2, 32)
+    L, R = text[0], text[1]
+
+    """шаг 1"""
+    R = XOR(R, L)
+    D = F(R, key[0])
+    L = XOR(L, D)
+    # R = XOR(L, R)
+    C = L
+    L = R
+    R = C
+    
+    """шаг 2"""
+    D = F(R, key[1])
+    L = XOR(L, D)
+    C = L
+    L = R
+    R = C
+
+    """шаг 3"""
+    D = F(R, key[2])
+    L = XOR(L, D)
+    C = L
+    L = R
+    R = C
+
+    """шаг 4"""
+    D = F(R, key[3])
+    L = XOR(L, D)
+    R = XOR(R, L)
+
+    text[0], text[1] = L, R
+    text = text.reshape(64)
+    text = XOR(text, key[4:8].reshape(64))
+
+    return text
+
+def FEAL_deencryption_term (text, key, chipher):
+    """Сам алгоритм FEAL, вернее дешифратор"""
+    # text = ''.join(format(ord(x), '08b') for x in text)
+    text = rev(text)
+    chipher = rev(chipher)
+    text = np.array(list(text))
+    chipher = np.array(list(chipher))
+
+    
+
+    text = XOR(text, key[4:8].reshape(64))
+    text = text.reshape(2, 32)
+    L, R = text[0], text[1]
+
+    """шаг 1"""
+    R = XOR(R, L)
+    D = F(R, key[3])
+    L = XOR(L, D)
+    # R = XOR(L, R)
+    C = L
+    L = R
+    R = C
+
+    """шаг 2"""
+    D = F(R, key[2])
+    L = XOR(L, D)
+    C = L
+    L = R
+    R = C
+
+    """шаг 3"""
+    D = F(R, key[1])
+    L = XOR(L, D)
+    C = L
+    L = R
+    R = C
+
+    """шаг 4"""
+    D = F(R, key[0])
+    L = XOR(L, D)
+    R = XOR(R, L)
+
+    text[0], text[1] = L, R
+    text = text.reshape(64)
+    text = XOR(text, key[4:8].reshape(64))
+
+    text = XOR(text, chipher)
+
+    return text
+
 def main():
 	
     file_name1 = "img.png"
@@ -240,8 +351,13 @@ def main():
 
 
     key = round_key("zxcvasdf")
+    # print("--> ", key.shape)
 
-    # message = "wasdwasdwasdwasd"
+    init_vector = "wasdwasd"
+    init_vector = ''.join(format(ord(x), '08b') for x in init_vector)
+
+    # message = "wasdwasdwasdwasdwasdwasd"
+    # message = "wasdwasd"
     # message = ''.join(format(ord(x), '08b') for x in message)
     message = img
 
@@ -251,9 +367,23 @@ def main():
         print("1")
 
     crypt0 = ''
+    # for i in range(len(message) // 64):
+    #     text = FEAL_encryption(message[i*64:i*64+64], key)
+    #     crypt0 += ''.join(text)
+
     for i in range(len(message) // 64):
-        text = FEAL_encryption(message[i*64:i*64+64], key)
-        crypt0 += ''.join(text)
+        if i < 1:
+            # print("true ", i)
+            text = FEAL_encryption_term(message[i*64:i*64+64], key, init_vector)
+            
+            crypt0 += ''.join(text)
+            # print("-- 2 ", crypt0)
+        else:
+            # print("false ", i)
+            text = FEAL_encryption_term(message[i*64:i*64+64], key, crypt0[(i - 1)*64:(i - 1)*64+64])
+            
+            crypt0 += ''.join(text)
+
     img = crypt0[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
 
     c = []
@@ -267,6 +397,9 @@ def main():
     img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
     cv2.imwrite(file_name2, img)
 
+
+
+
     crypt = cv2.imread(file_name4)
     crypt_shape = np.array(crypt.shape)
     crypt = crypt.reshape(crypt_shape[0] * crypt_shape[1] * crypt_shape[2])
@@ -274,9 +407,25 @@ def main():
     # print(len(crypt))
 
     decrypt = ''
+    # for i in range(len(crypt) // 64):
+    #     text = FEAL_deencryption(crypt[i*64:i*64+64], key)
+    #     decrypt += ''.join(text)
+
+    crypt = rev(crypt)
+    init_vector = rev(init_vector)
     for i in range(len(crypt) // 64):
-        text = FEAL_deencryption(crypt[i*64:i*64+64], key)
-        decrypt += ''.join(text)
+        if i < (len(crypt) // 64) - 1:
+            # print("true ", i)
+            text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, crypt[(i + 1)*64:(i + 1)*64+64])
+            text = rev(text)
+            decrypt += ''.join(text)
+        else:
+            # print("false ", i)
+            text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, init_vector)
+            text = rev(text)
+            decrypt += ''.join(text)
+    decrypt = rev(decrypt)
+
     img = decrypt[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
 
     z = []
@@ -293,18 +442,37 @@ def main():
 
 
     # crypt = ''
+    # # print("-- 1 ", message)
     # for i in range(len(message) // 64):
-    #     text = FEAL_encryption(message[i*64:i*64+64], key, i)
-    #     crypt += ''.join(text)
+    #     if i < 1:
+    #         print("true ", i)
+    #         text = FEAL_encryption(message[i*64:i*64+64], key)
+    #         crypt += ''.join(text)
+    #         # print("-- 2 ", crypt)
+    #     else:
+    #         # print("false ", i)
+    #         text = FEAL_encryption_term(message[i*64:i*64+64], key, crypt[(i - 1)*64:(i - 1)*64+64])
+    #         crypt += ''.join(text)
+
     # term = ''.join(chr(int(crypt[i*8:i*8+8], 2)) for i in range(len(crypt) // 8))
     # print("term -->", term)
 
     # term = ''.join(format(ord(x), '08b') for x in term)
-    # print(len(term))
+    # # print("-- 4 ", len(term) // 64)
+    # # print(term)
+    # term = rev(term)
+    # # print(term)
     # decrypt = ''
     # for i in range(len(term) // 64):
-    #     text = FEAL_deencryption(term[i*64:i*64+64], key, i)
-    #     decrypt += ''.join(text)
+    #     if i < (len(term) // 64) - 1:
+    #         # print("true ", i)
+    #         text = FEAL_deencryption_term(term[i*64:i*64+64], key, term[(i + 1)*64:(i + 1)*64+64])
+    #         decrypt += ''.join(text)
+    #     else:
+    #         print("false ", i)
+    #         text = FEAL_deencryption(term[i*64:i*64+64], key)
+    #         decrypt += ''.join(text)
+
     # print("decrypt --> ", len(decrypt))
     # term = ''.join(chr(int(decrypt[i*8:i*8+8], 2)) for i in range(len(decrypt) // 8))
     # print(term)
