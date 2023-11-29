@@ -4,16 +4,11 @@ import cv2
 # import matplotlib.pyplot as plt
 
 def rev(var):
+    """Функция инвертирования строки
+    Передается строка"""
     res=''
     for i in range(len(var)-1,-1,-1):
         res+=var[i]
-    return res
-
-# def rev(var):
-    res = ''
-    for i in range (len(var) // 64):
-        # print(term[i*5:i*5+5])
-        res = var[i*64:i*64+64] + res
     return res
 
 def XOR (a0, a1):
@@ -338,21 +333,21 @@ def FEAL_deencryption_term (text, key, chipher):
     return text
 
 def main():
-	
-    file_name1 = "img.png"
-    file_name2 = "newimg.png"
-    file_name3 = "decryptimg.png"
-    file_name4 = "newimg_copy.png"
-    img = cv2.imread(file_name1)
+    file_name_img = "img.png"
+    file_name_newimg = "newimg.png"
+    file_name_decryptimg = "decryptimg.png"
+    file_name_newimg_copy = "newimg_copy.png"
+
+    # Окрытие картинки и преобразование в необходимый формат
+    img = cv2.imread(file_name_img)
     img_shape = np.array(img.shape)
     img = img.reshape(img_shape[0] * img_shape[1] * img_shape[2])
     img = ''.join(format(x, '08b') for x in img)
-    # print(len(img))
 
-
+    # Генерация ключа
     key = round_key("zxcvasdf")
-    # print("--> ", key.shape)
 
+    # Создание вектора инициализации для режима CBC
     init_vector = "wasdwasd"
     init_vector = ''.join(format(ord(x), '08b') for x in init_vector)
 
@@ -361,84 +356,79 @@ def main():
     # message = ''.join(format(ord(x), '08b') for x in message)
     message = img
 
-
+    # Добавление дополнительных бит в последний блок
     while (round(len(message) % 64) != 0):
         message += '0'
         print("1")
 
+    # Шифровка в режиме работы CBC
     crypt0 = ''
-    # for i in range(len(message) // 64):
-    #     text = FEAL_encryption(message[i*64:i*64+64], key)
-    #     crypt0 += ''.join(text)
-
     for i in range(len(message) // 64):
         if i < 1:
             # print("true ", i)
             text = FEAL_encryption_term(message[i*64:i*64+64], key, init_vector)
-            
             crypt0 += ''.join(text)
-            # print("-- 2 ", crypt0)
         else:
-            # print("false ", i)
             text = FEAL_encryption_term(message[i*64:i*64+64], key, crypt0[(i - 1)*64:(i - 1)*64+64])
-            
             crypt0 += ''.join(text)
 
+    # Отсечение дополнительных бит
     img = crypt0[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
 
+    # Преобразование строки в форму подходящую для картинки
     c = []
     for i in range(len(img) // 8):
         j = int(img[i*8:i*8+8], 2)
         c.append(j)
     c = np.array(c)
     img = c
-    
-    print("Encrypt successfully")
     img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
-    cv2.imwrite(file_name2, img)
+    
+    # Сохраниение картинки
+    cv2.imwrite(file_name_newimg, img)
+    print("Encrypt successfully")
 
 
 
 
-    crypt = cv2.imread(file_name4)
+    # Извлечение картики для дешифрации
+    crypt = cv2.imread(file_name_newimg_copy)
     crypt_shape = np.array(crypt.shape)
     crypt = crypt.reshape(crypt_shape[0] * crypt_shape[1] * crypt_shape[2])
     crypt = ''.join(format(x, '08b') for x in crypt)
-    # print(len(crypt))
 
+    # дешифровка в режиме работы CBC
     decrypt = ''
-    # for i in range(len(crypt) // 64):
-    #     text = FEAL_deencryption(crypt[i*64:i*64+64], key)
-    #     decrypt += ''.join(text)
-
+    # Инвертирование полученной строки
     crypt = rev(crypt)
     for i in range(len(crypt) // 64):
         if i < (len(crypt) // 64) - 1:
-            # print("true ", i)
             text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, crypt[(i + 1)*64:(i + 1)*64+64])
+            # Повторное инвертирование блока
             text = rev(text)
             decrypt += ''.join(text)
         else:
-            # print("false ", i)
             text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, init_vector)
+            # Повторное инвертирование блока
             text = rev(text)
             decrypt += ''.join(text)
     decrypt = rev(decrypt)
 
+    # Отсечение дополнительных бит
     img = decrypt[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
 
+    # Преобразование строки в форму подходящую для картинки
     z = []
     for i in range(len(img) // 8):
         j = int(img[i*8:i*8+8], 2)
         z.append(j)
     z = np.array(z)
-    # print(z.shape)
     img = z
-
-    print("Decrypt successfully")
     img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
-    cv2.imwrite(file_name3, img)
 
+    # Сохраниение картинки
+    cv2.imwrite(file_name_decryptimg, img)
+    print("Decrypt successfully")
 
     # crypt = ''
     # # print("-- 1 ", message)
