@@ -1,7 +1,22 @@
 import numpy as np
 import cv2
-# from PIL import Image
-# import matplotlib.pyplot as plt
+import time
+import multiprocessing
+
+def timer():
+    while True:
+        start = time.time()
+        sec = time.time()
+        while True:
+            with open('term.txt', 'r') as f:
+                a = f.read(1)
+            if a == "1":
+                with open('term.txt', 'w') as f:
+                    f.write("0")
+                break
+            if time.time() - sec > 1.0:
+                print("Seconds -->", str(round((time.time() - start))), end="\r")
+                sec = time.time()
 
 def foo(file_path):
     file_path = "img.png"
@@ -366,9 +381,6 @@ def main():
     init_vector = "wasdwasd"
     init_vector = ''.join(format(ord(x), '08b') for x in init_vector)
 
-    # message = "wasdwasdwasdwasdwasdwasd"
-    # message = "wasdwasd"
-    # message = ''.join(format(ord(x), '08b') for x in message)
     message = img
 
     # Добавление дополнительных бит в последний блок
@@ -380,7 +392,6 @@ def main():
     crypt0 = ''
     for i in range(len(message) // 64):
         if i < 1:
-            # print("true ", i)
             text = FEAL_encryption_term(message[i*64:i*64+64], key, init_vector)
             crypt0 += ''.join(text)
         else:
@@ -401,9 +412,12 @@ def main():
     
     # Сохраниение картинки
     cv2.imwrite(file_name_newimg, img)
+    with open('term.txt', 'w') as f:
+        f.write("1")
     print("Encrypt successfully")
 
 
+    
 
 
     # Извлечение картики для дешифрации
@@ -443,44 +457,16 @@ def main():
 
     # Сохраниение картинки
     cv2.imwrite(file_name_decryptimg, img)
+    with open('term.txt', 'w') as f:
+        f.write("0")
     print("Decrypt successfully")
-
-    # crypt = ''
-    # # print("-- 1 ", message)
-    # for i in range(len(message) // 64):
-    #     if i < 1:
-    #         print("true ", i)
-    #         text = FEAL_encryption(message[i*64:i*64+64], key)
-    #         crypt += ''.join(text)
-    #         # print("-- 2 ", crypt)
-    #     else:
-    #         # print("false ", i)
-    #         text = FEAL_encryption_term(message[i*64:i*64+64], key, crypt[(i - 1)*64:(i - 1)*64+64])
-    #         crypt += ''.join(text)
-
-    # term = ''.join(chr(int(crypt[i*8:i*8+8], 2)) for i in range(len(crypt) // 8))
-    # print("term -->", term)
-
-    # term = ''.join(format(ord(x), '08b') for x in term)
-    # # print("-- 4 ", len(term) // 64)
-    # # print(term)
-    # term = rev(term)
-    # # print(term)
-    # decrypt = ''
-    # for i in range(len(term) // 64):
-    #     if i < (len(term) // 64) - 1:
-    #         # print("true ", i)
-    #         text = FEAL_deencryption_term(term[i*64:i*64+64], key, term[(i + 1)*64:(i + 1)*64+64])
-    #         decrypt += ''.join(text)
-    #     else:
-    #         print("false ", i)
-    #         text = FEAL_deencryption(term[i*64:i*64+64], key)
-    #         decrypt += ''.join(text)
-
-    # print("decrypt --> ", len(decrypt))
-    # term = ''.join(chr(int(decrypt[i*8:i*8+8], 2)) for i in range(len(decrypt) // 8))
-    # print(term)
 
 
 if __name__ == "__main__":
-    main()
+    # t1 = threading.Thread(target=main, args=(), daemon=True)
+    # t2 = threading.Thread(target=timer, args=(), daemon=True)
+    t1 = multiprocessing.Process(target=main, args=(), daemon=True)
+    t2 = multiprocessing.Process(target=timer, args=(), daemon=True)
+    t1.start()
+    t2.start()
+    t1.join()
