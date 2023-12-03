@@ -27,17 +27,36 @@ from time import sleep
 #         img = np.concatenate((img, dop), axis=1)
 # cv2.imwrite(file_name_img, img)
 
-sleep(1)
-f = open('term.txt', 'w')
-f.write("0")
-f.close()
+# sleep(1)
+# f = open('term.txt', 'w')
+# f.write("0")
+# f.close()
 
-sleep(2)
-with open('term.txt', 'r') as f:
-    r = f.read(1)
-print(r)
+# sleep(2)
+# with open('term.txt', 'r') as f:
+#     r = f.read(1)
+# print(r)
 	
-sleep(2)
-f = open('term.txt', 'w')
-f.write("1")
-f.close()
+# sleep(2)
+# f = open('term.txt', 'w')
+# f.write("1")
+# f.close()
+
+# import tqdm
+# import time
+# for i in tqdm.tqdm(range(100)):
+#     time.sleep(0.25)
+
+import numpy as np
+import cv2
+
+img = cv2.imread("C:/Users/tv_20/Downloads/term.png")
+
+red_chanel = img[:, :, 2]
+print("Красная компонента -->", red_chanel)
+green_chanel = img[:, :, 1]
+print("Зеленая компонента -->", green_chanel)
+blue_chanel = img[:, :, 0]
+print("Синяя компонента   -->", blue_chanel)
+
+# np.save('saves_data', red_chanel)

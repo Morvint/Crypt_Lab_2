@@ -1,22 +1,18 @@
 import numpy as np
 import cv2
-import time
+import tqdm
 import multiprocessing
 
-def timer():
-    while True:
-        start = time.time()
-        sec = time.time()
-        while True:
-            with open('term.txt', 'r') as f:
-                a = f.read(1)
-            if a == "1":
-                with open('term.txt', 'w') as f:
-                    f.write("0")
-                break
-            if time.time() - sec > 1.0:
-                print("Seconds -->", str(round((time.time() - start))), end="\r")
-                sec = time.time()
+def RGB_chanels(img):
+    red_chanel = img[:, :, 2]
+    green_chanel = img[:, :, 1]
+    blue_chanel = img[:, :, 0]
+
+    red_chanel = red_chanel.reshape(red_chanel.shape[0] * red_chanel.shape[1])
+    green_chanel = green_chanel.reshape(green_chanel.shape[0] * green_chanel.shape[1])
+    blue_chanel = blue_chanel.reshape(blue_chanel.shape[0] * blue_chanel.shape[1])
+
+    return red_chanel, green_chanel, blue_chanel
 
 def foo(file_path):
     file_path = "img.png"
@@ -33,8 +29,10 @@ def foo(file_path):
     cv2.imwrite(file_path, img)
 
 def rev(var):
-    """Функция инвертирования строки
-    Передается строка"""
+    """ 
+        Функция инвертирования строки
+        Передается строка
+    """
     res=''
     for i in range(len(var)-1,-1,-1):
         res+=var[i]
@@ -367,9 +365,10 @@ def main():
     file_name_decryptimg = "decryptimg.png"
     file_name_newimg_copy = "newimg_copy.png"
 
-    # Окрытие картинки и преобразование в необходимый формат
+    # Окрытие картинки и преобразование в необходимый формат и получение RGB компонент
     foo(file_name_img)
     img = cv2.imread(file_name_img)
+    red_chanel_before, green_chanel_before, blue_chanel_before = RGB_chanels(img)
     img_shape = np.array(img.shape)
     img = img.reshape(img_shape[0] * img_shape[1] * img_shape[2])
     img = ''.join(format(x, '08b') for x in img)
@@ -390,7 +389,7 @@ def main():
 
     # Шифровка в режиме работы CBC
     crypt0 = ''
-    for i in range(len(message) // 64):
+    for i in tqdm.tqdm(range(len(message) // 64)):
         if i < 1:
             text = FEAL_encryption_term(message[i*64:i*64+64], key, init_vector)
             crypt0 += ''.join(text)
@@ -398,8 +397,16 @@ def main():
             text = FEAL_encryption_term(message[i*64:i*64+64], key, crypt0[(i - 1)*64:(i - 1)*64+64])
             crypt0 += ''.join(text)
 
+    ones = crypt0.count("1")
+    print("Eдиниц выходном потоке -- >", ones)
+    zeros = crypt0.count("0")
+    print("Нулей выходном потоке -- >", zeros)
+    print("Отношение 1 к длине -->", ones / len(crypt0))
+    print("Отношение 0 к длине -->", zeros / len(crypt0))
+
     # Отсечение дополнительных бит
-    img = crypt0[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
+    # img = crypt0[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
+    img = crypt0
 
     # Преобразование строки в форму подходящую для картинки
     c = []
@@ -412,6 +419,10 @@ def main():
     
     # Сохраниение картинки
     cv2.imwrite(file_name_newimg, img)
+    red_chanel_after, green_chanel_after, blue_chanel_after = RGB_chanels(img)
+    print("Корреляция RG -->", np.corrcoef(red_chanel_before, green_chanel_after)[0, 1])
+    print("Корреляция GB -->", np.corrcoef(green_chanel_before, blue_chanel_after)[0, 1])
+    print("Корреляция BR -->", np.corrcoef(blue_chanel_before, red_chanel_after)[0, 1])
     with open('term.txt', 'w') as f:
         f.write("1")
     print("Encrypt successfully")
@@ -430,7 +441,7 @@ def main():
     decrypt = ''
     # Инвертирование полученной строки
     crypt = rev(crypt)
-    for i in range(len(crypt) // 64):
+    for i in tqdm.tqdm(range(len(crypt) // 64)):
         if i < (len(crypt) // 64) - 1:
             text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, crypt[(i + 1)*64:(i + 1)*64+64])
             # Повторное инвертирование блока
@@ -463,10 +474,6 @@ def main():
 
 
 if __name__ == "__main__":
-    # t1 = threading.Thread(target=main, args=(), daemon=True)
-    # t2 = threading.Thread(target=timer, args=(), daemon=True)
     t1 = multiprocessing.Process(target=main, args=(), daemon=True)
-    t2 = multiprocessing.Process(target=timer, args=(), daemon=True)
     t1.start()
-    t2.start()
     t1.join()
