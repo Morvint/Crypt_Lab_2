@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import tqdm
 import multiprocessing
+from art import tprint
 
 def RGB_chanels(img):
     red_chanel = img[:, :, 2]
@@ -360,18 +361,12 @@ def FEAL_deencryption_term (text, key, chipher):
     return text
 
 def main():
-    file_name_img = "img.png"
+    tprint("Programm Run")
+
+    file_name_img = "fate.png"
     file_name_newimg = "newimg.png"
     file_name_decryptimg = "decryptimg.png"
     file_name_newimg_copy = "newimg_copy.png"
-
-    # Окрытие картинки и преобразование в необходимый формат и получение RGB компонент
-    foo(file_name_img)
-    img = cv2.imread(file_name_img)
-    red_chanel_before, green_chanel_before, blue_chanel_before = RGB_chanels(img)
-    img_shape = np.array(img.shape)
-    img = img.reshape(img_shape[0] * img_shape[1] * img_shape[2])
-    img = ''.join(format(x, '08b') for x in img)
 
     # Генерация ключа
     key = round_key("zxcvasdf")
@@ -380,100 +375,109 @@ def main():
     init_vector = "wasdwasd"
     init_vector = ''.join(format(ord(x), '08b') for x in init_vector)
 
-    message = img
+    print("Enter [Y] to run encrypt -->", end=" ")
+    flag = input()
+    print("Enter [Y] to run decrypt -->", end=" ")
+    flag1 = input()
 
-    # Добавление дополнительных бит в последний блок
-    while (round(len(message) % 64) != 0):
-        message += '0'
-        print("1")
+    if flag == "Y":
+        tprint("Encrypt Run")
 
-    # Шифровка в режиме работы CBC
-    crypt0 = ''
-    for i in tqdm.tqdm(range(len(message) // 64)):
-        if i < 1:
-            text = FEAL_encryption_term(message[i*64:i*64+64], key, init_vector)
-            crypt0 += ''.join(text)
-        else:
-            text = FEAL_encryption_term(message[i*64:i*64+64], key, crypt0[(i - 1)*64:(i - 1)*64+64])
-            crypt0 += ''.join(text)
+        # Окрытие картинки и преобразование в необходимый формат и получение RGB компонент
+        foo(file_name_img)
+        img = cv2.imread(file_name_img)
+        red_chanel_before, green_chanel_before, blue_chanel_before = RGB_chanels(img)
+        img_shape = np.array(img.shape)
+        img = img.reshape(img_shape[0] * img_shape[1] * img_shape[2])
+        img = ''.join(format(x, '08b') for x in img)
 
-    ones = crypt0.count("1")
-    print("Eдиниц выходном потоке -- >", ones)
-    zeros = crypt0.count("0")
-    print("Нулей выходном потоке -- >", zeros)
-    print("Отношение 1 к длине -->", ones / len(crypt0))
-    print("Отношение 0 к длине -->", zeros / len(crypt0))
+        message = img
 
-    # Отсечение дополнительных бит
-    # img = crypt0[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
-    img = crypt0
+        # Шифровка в режиме работы CBC
+        crypt0 = ''
+        for i in tqdm.tqdm(range(len(message) // 64)):
+            if i < 1:
+                text = FEAL_encryption_term(message[i*64:i*64+64], key, init_vector)
+                crypt0 += ''.join(text)
+            else:
+                text = FEAL_encryption_term(message[i*64:i*64+64], key, crypt0[(i - 1)*64:(i - 1)*64+64])
+                crypt0 += ''.join(text)
 
-    # Преобразование строки в форму подходящую для картинки
-    c = []
-    for i in range(len(img) // 8):
-        j = int(img[i*8:i*8+8], 2)
-        c.append(j)
-    c = np.array(c)
-    img = c
-    img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
+        ones = crypt0.count("1")
+        print("Eдиниц выходном потоке -- >", ones)
+        zeros = crypt0.count("0")
+        print("Нулей выходном потоке -- >", zeros)
+        print("Отношение 1 к длине -->", ones / len(crypt0))
+        print("Отношение 0 к длине -->", zeros / len(crypt0))
+
+        # Отсечение дополнительных бит
+        # img = crypt0[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
+        img = crypt0
+
+        # Преобразование строки в форму подходящую для картинки
+        c = []
+        for i in range(len(img) // 8):
+            j = int(img[i*8:i*8+8], 2)
+            c.append(j)
+        c = np.array(c)
+        img = c
+        img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
+        
+        # Сохраниение картинки
+        cv2.imwrite(file_name_newimg, img)
+        red_chanel_after, green_chanel_after, blue_chanel_after = RGB_chanels(img)
+        print("Корреляция RG -->", np.corrcoef(red_chanel_before, green_chanel_after)[0, 1])
+        print("Корреляция GB -->", np.corrcoef(green_chanel_before, blue_chanel_after)[0, 1])
+        print("Корреляция BR -->", np.corrcoef(blue_chanel_before, red_chanel_after)[0, 1])
+        print("Encrypt successfully")
+
+
     
-    # Сохраниение картинки
-    cv2.imwrite(file_name_newimg, img)
-    red_chanel_after, green_chanel_after, blue_chanel_after = RGB_chanels(img)
-    print("Корреляция RG -->", np.corrcoef(red_chanel_before, green_chanel_after)[0, 1])
-    print("Корреляция GB -->", np.corrcoef(green_chanel_before, blue_chanel_after)[0, 1])
-    print("Корреляция BR -->", np.corrcoef(blue_chanel_before, red_chanel_after)[0, 1])
-    with open('term.txt', 'w') as f:
-        f.write("1")
-    print("Encrypt successfully")
+    if flag1 == "Y":
+        tprint("Decrypt Run")
 
+        # Извлечение картики для дешифрации
+        crypt = cv2.imread(file_name_newimg)
+        crypt_shape = np.array(crypt.shape)
+        crypt = crypt.reshape(crypt_shape[0] * crypt_shape[1] * crypt_shape[2])
+        crypt = ''.join(format(x, '08b') for x in crypt)
 
-    
+        # дешифровка в режиме работы CBC
+        decrypt = ''
+        # Инвертирование полученной строки
+        crypt = rev(crypt)
+        for i in tqdm.tqdm(range(len(crypt) // 64)):
+            if i < (len(crypt) // 64) - 1:
+                text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, crypt[(i + 1)*64:(i + 1)*64+64])
+                # Повторное инвертирование блока
+                text = rev(text)
+                decrypt += ''.join(text)
+            else:
+                text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, init_vector)
+                # Повторное инвертирование блока
+                text = rev(text)
+                decrypt += ''.join(text)
+        decrypt = rev(decrypt)
 
+        # Отсечение дополнительных бит
+        img = decrypt[0:crypt_shape[0] * crypt_shape[1] * crypt_shape[2] * 8]
 
-    # Извлечение картики для дешифрации
-    crypt = cv2.imread(file_name_newimg_copy)
-    crypt_shape = np.array(crypt.shape)
-    crypt = crypt.reshape(crypt_shape[0] * crypt_shape[1] * crypt_shape[2])
-    crypt = ''.join(format(x, '08b') for x in crypt)
+        # Преобразование строки в форму подходящую для картинки
+        z = []
+        for i in range(len(img) // 8):
+            j = int(img[i*8:i*8+8], 2)
+            z.append(j)
+        z = np.array(z)
+        img = z
+        img = img.reshape(crypt_shape[0], crypt_shape[1], crypt_shape[2])
 
-    # дешифровка в режиме работы CBC
-    decrypt = ''
-    # Инвертирование полученной строки
-    crypt = rev(crypt)
-    for i in tqdm.tqdm(range(len(crypt) // 64)):
-        if i < (len(crypt) // 64) - 1:
-            text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, crypt[(i + 1)*64:(i + 1)*64+64])
-            # Повторное инвертирование блока
-            text = rev(text)
-            decrypt += ''.join(text)
-        else:
-            text = FEAL_deencryption_term(crypt[i*64:i*64+64], key, init_vector)
-            # Повторное инвертирование блока
-            text = rev(text)
-            decrypt += ''.join(text)
-    decrypt = rev(decrypt)
-
-    # Отсечение дополнительных бит
-    img = decrypt[0:crypt_shape[0] * crypt_shape[1] * crypt_shape[2] * 8]
-
-    # Преобразование строки в форму подходящую для картинки
-    z = []
-    for i in range(len(img) // 8):
-        j = int(img[i*8:i*8+8], 2)
-        z.append(j)
-    z = np.array(z)
-    img = z
-    img = img.reshape(crypt_shape[0], crypt_shape[1], crypt_shape[2])
-
-    # Сохраниение картинки
-    cv2.imwrite(file_name_decryptimg, img)
-    with open('term.txt', 'w') as f:
-        f.write("0")
-    print("Decrypt successfully")
+        # Сохраниение картинки
+        cv2.imwrite(file_name_decryptimg, img)
+        print("Decrypt successfully")
 
 
 if __name__ == "__main__":
-    t1 = multiprocessing.Process(target=main, args=(), daemon=True)
-    t1.start()
-    t1.join()
+    # t1 = multiprocessing.Process(target=main, args=(), daemon=True)
+    # t1.start()
+    # t1.join()
+    main()

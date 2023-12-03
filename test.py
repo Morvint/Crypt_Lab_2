@@ -47,16 +47,45 @@ from time import sleep
 # for i in tqdm.tqdm(range(100)):
 #     time.sleep(0.25)
 
-import numpy as np
-import cv2
+# import numpy as np
+# import cv2
 
-img = cv2.imread("C:/Users/tv_20/Downloads/term.png")
+# img = cv2.imread("C:/Users/tv_20/Downloads/term.png")
 
-red_chanel = img[:, :, 2]
-print("Красная компонента -->", red_chanel)
-green_chanel = img[:, :, 1]
-print("Зеленая компонента -->", green_chanel)
-blue_chanel = img[:, :, 0]
-print("Синяя компонента   -->", blue_chanel)
+# red_chanel = img[:, :, 2]
+# print("Красная компонента -->", red_chanel)
+# green_chanel = img[:, :, 1]
+# print("Зеленая компонента -->", green_chanel)
+# blue_chanel = img[:, :, 0]
+# print("Синяя компонента   -->", blue_chanel)
 
-# np.save('saves_data', red_chanel)
+# # np.save('saves_data', red_chanel)
+
+# from art import tprint
+
+# tprint("Term")
+
+# import enquiries
+# options = ['Do Something 1', 'Do Something 2', 'Do Something 3']
+# choice = enquiries.choose('Choose one of these options: ', options)
+# print(choice)
+
+# from pick import pick
+
+# title = 'Please choose your favorite programming language: '
+# options = ['Java', 'JavaScript', 'Python', 'PHP', 'C++', 'Erlang', 'Haskell']
+
+# option, index = pick(options, title, indicator='=>', default_index=2)
+
+import os
+from simple_term_menu import TerminalMenu
+
+
+def main():
+    fruits = ["[a] apple", "[b] banana", "[o] orange"]
+    terminal_menu = TerminalMenu(fruits, title="Fruits")
+    menu_entry_index = terminal_menu.show()
+
+
+if __name__ == "__main__":
+    main()
