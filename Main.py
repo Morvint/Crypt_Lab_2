@@ -1,8 +1,9 @@
 import numpy as np
 import cv2
 import tqdm
-import multiprocessing
 from art import tprint
+import random
+import matplotlib.pyplot as plt
 
 def RGB_chanels(img):
     red_chanel = img[:, :, 2]
@@ -15,8 +16,8 @@ def RGB_chanels(img):
 
     return red_chanel, green_chanel, blue_chanel
 
-def foo(file_path):
-    file_path = "img.png"
+def foo(path):
+    file_path = path
     img = cv2.imread(file_path)
     size = img.shape
     if(size[0] * size[1] % 8 != 0):
@@ -114,9 +115,16 @@ def F_k(A, B):
     # print(C, C.shape)
     return C
 
+def get_key(key):
+    key = np.array(list(key))
+    key = key.reshape(8, 16)
+    return key
+
 def round_key(key):
     """Функция генерации ключей раундов"""
-    key = ''.join(format(ord(x), '08b') for x in key)
+    if (len(key) == 8):
+        key = ''.join(format(ord(x), '08b') for x in key)
+        print("term")
     key = np.array(list(key))
     key = key.reshape(2, key.size // 2)
     L, R = key[0], key[1]
@@ -363,7 +371,7 @@ def FEAL_deencryption_term (text, key, chipher):
 def main():
     tprint("Programm Run")
 
-    file_name_img = "fate.png"
+    file_name_img = "img.png"
     file_name_newimg = "newimg.png"
     file_name_decryptimg = "decryptimg.png"
     file_name_newimg_copy = "newimg_copy.png"
@@ -381,7 +389,7 @@ def main():
     flag1 = input()
 
     if flag == "Y":
-        tprint("Encrypt Run")
+        print("Encrypt Run")
 
         # Окрытие картинки и преобразование в необходимый формат и получение RGB компонент
         foo(file_name_img)
@@ -432,9 +440,7 @@ def main():
         print("Encrypt successfully")
 
 
-    
-    if flag1 == "Y":
-        tprint("Decrypt Run")
+        print("Decrypt Run")
 
         # Извлечение картики для дешифрации
         crypt = cv2.imread(file_name_newimg)
@@ -475,9 +481,184 @@ def main():
         cv2.imwrite(file_name_decryptimg, img)
         print("Decrypt successfully")
 
+def main1():
+	
+    file_name1 = "img.png"
+    file_name2 = "newimg.png"
+    file_name3 = "decryptimg.png"
+    file_name4 = "newimg_copy.png"
+
+    foo(file_name1)
+    img = cv2.imread(file_name1)
+    img_shape = np.array(img.shape)
+    img = img.reshape(img_shape[0] * img_shape[1] * img_shape[2])
+    img = ''.join(format(x, '08b') for x in img)
+    # print(len(img))
+
+
+    key = round_key("zxcvasdf")
+
+    # message = "wasdwasdwasdwasd"
+    # message = ''.join(format(ord(x), '08b') for x in message)
+    message = img
+
+
+    while (round(len(message) % 64) != 0):
+        message += '0'
+        print("1")
+
+    crypt0 = ''
+    for i in tqdm.tqdm(range(len(message) // 64)):
+        text = FEAL_encryption(message[i*64:i*64+64], key)
+        crypt0 += ''.join(text)
+    img = crypt0[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
+
+    c = []
+    for i in range(len(img) // 8):
+        j = int(img[i*8:i*8+8], 2)
+        c.append(j)
+    c = np.array(c)
+    img = c
+    
+    print("Encrypt successfully")
+    img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
+    cv2.imwrite(file_name2, img)
+
+
+
+
+    foo(file_name2)
+    crypt = cv2.imread(file_name2)
+    crypt_shape = np.array(crypt.shape)
+    crypt = crypt.reshape(crypt_shape[0] * crypt_shape[1] * crypt_shape[2])
+    crypt = ''.join(format(x, '08b') for x in crypt)
+    # print(len(crypt))
+
+    decrypt = ''
+    for i in tqdm.tqdm(range(len(crypt) // 64)):
+        text = FEAL_deencryption(crypt[i*64:i*64+64], key)
+        decrypt += ''.join(text)
+    img = decrypt[0:img_shape[0] * img_shape[1] * img_shape[2] * 8]
+
+    z = []
+    for i in range(len(img) // 8):
+        j = int(img[i*8:i*8+8], 2)
+        z.append(j)
+    z = np.array(z)
+    # print(z.shape)
+    img = z
+
+    print("Decrypt successfully")
+    img = img.reshape(img_shape[0], img_shape[1], img_shape[2])
+    cv2.imwrite(file_name3, img)
+    
+def diff_letters(a,b):
+    return float(sum ( a[i] != b[i] for i in range(len(a)) ))
+
+def Lab3():
+    key = ""
+    while len(key) < 128:
+        key += "1"
+    key = get_key(key)
+    # print(key)
+
+    key = ""
+    while len(key) < 128:
+        key += "0"
+    key = get_key(key)
+    # print(key)
+
+    key = "00001111001100110000111100110011000011110011001100001111001100110000111100110011000011110011001100001111001100110000111100110011"
+    key = get_key(key)
+    # print(key)
+
+    key = "00001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111"
+    key = get_key(key)
+    # print(key)
+
+    key = ""
+    while len(key) < 128:
+        key += random.choice(['0', '1'])
+    key = get_key(key)
+    # print(key.shape)
+
+
+    text = "wasdwasd"
+    message = ''.join(format(ord(x), '08b') for x in text)
+    print("Исходный текст      -->", message)
+
+    crypt0 = ''
+    for i in tqdm.tqdm(range(len(message) // 64)):
+        text = FEAL_encryption(message[i*64:i*64+64], key)
+        crypt0 += ''.join(text)
+    print("Защифрованный текст -->", crypt0)
+
+    list_term = ''
+    for i in range(64):
+        if crypt0[i] != message[i]:
+            list_term += "*"
+        else:
+            list_term += "_"
+    print(list_term)
+    
+
+    # print("\033[34m{}".format("text"))
+
+    list_graf0 = []
+    list_graf1 = []
+    for i in range(64):
+        crypt1 = crypt0[-(i + 1):] + crypt0[:-(i+1)]
+        list_graf0.append(i + 1)
+        list_graf1.append(diff_letters(crypt0, crypt1) / 64.0)
+    # print(list_graf0)
+
+    # print(list_graf1)
+    plt.plot(list_graf0, list_graf1)
+
+    list_siries = []
+    for i in range(0,64):
+        list_siries.append(0)
+
+    count = 1
+    for i in range(1, 64):
+        if crypt0[i - 1] == crypt0[i]:
+            count += 1
+        else:
+            list_siries[count] += 1
+            count = 1
+    print(list_siries)
+
+    ones = crypt0.count("1")
+    print("Eдиниц выходном потоке -- >", ones)
+    print("Отношение 1 к длине -->", ones / len(crypt0))
+    plt.show()
+    
+def RSLOS_generate(key):
+    # key = key[-1:] + key[:-1]
+    
+    if key[9] == key[2]:
+        # key = "0" + key[-9:]
+        key = "0" + key[:-1]
+    else:
+        # key = "1" + key[-9:]
+        key = "1" + key[:-1]
+
+    return key
+
+def Lab3_base():
+    key = "1010101010"
+    text = RSLOS_generate(key)
+
+    count = 0
+    while text != key:
+        text = RSLOS_generate(text)
+        count += 1
+    print(count)
+
+    
 
 if __name__ == "__main__":
-    # t1 = multiprocessing.Process(target=main, args=(), daemon=True)
-    # t1.start()
-    # t1.join()
-    main()
+    # main()
+    # main1()
+    # Lab3()
+    Lab3_base()
